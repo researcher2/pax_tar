@@ -56,12 +56,26 @@ void paxReading(string &testFileName)
 {
     TarFile tarFile(testFileName);
 
+    // Iterate through all files
     for (TarFileEntry &fileEntry : tarFile.files)
     {
-        cout << "Path: " << fileEntry.path << " ";
-        cout << "Size: " << fileEntry.size << " ";
         string loadedData;
         tarFile.getFileData(fileEntry, loadedData);
+
+        cout << "Path: " << fileEntry.path << " ";
+        cout << "Size: " << fileEntry.size << " ";
+        cout << "Data: " << loadedData << endl;
+    }
+
+    // Find functionality:
+    if (tarFile.filesByPath.count("test1.txt"))
+    {
+        TarFileEntry &fileEntry = *tarFile.filesByPath["test1.txt"];
+        string loadedData;
+        tarFile.getFileData(fileEntry, loadedData);
+
+        cout << "Path: " << fileEntry.path << " ";
+        cout << "Size: " << fileEntry.size << " ";
         cout << "Data: " << loadedData << endl;
     }
 }
