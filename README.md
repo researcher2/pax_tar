@@ -8,12 +8,24 @@ I wanted support for 64 bit file sizes under Windows as well as files > 8gb in t
 ## Supported Environments & Build Systems
 ### Prerequisites 
 We use the excellent fmtlib: https://github.com/fmtlib/fmt.
-- Windows: automatic dependency in vcpkg
+- Windows: automatic dependency in VCPKG
 - Linux: clone from github, checkout 5.1.0, build and install with cmake
 
-### Windows 10 x64
-- vcpkg install pax_tar:x64-windows
-- Visual Studio 2017 Solution included for self building
+### Windows 10 x64 VCPKG
+As this is not a fully complete TAR library I have not submitted it to the VCPKG curated list. However, I have written the port file so you can still easily install with VCPKG.
+
+First download the source. From our source tree, copy the "vcpkg/ports/pax-tar" directory into your "vcpkg/ports" directory. Then:
+```
+vcpkg install pax_tar:x64-windows
+```
+
+### Windows 10 x64 Visual Studio
+Visual Studio 2017 Solution included for self building:
+- Static CRT lib
+- Dynamic CRT lib
+- Test Project
+- Examples Project (can be used to test vcpkg dynamic crt linkage)
+- Testing vcpkg static crt linkage project
 
 ### Linux (Tested Under CentOS)
 meson build file included
