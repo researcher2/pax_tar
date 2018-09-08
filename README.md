@@ -8,15 +8,25 @@ I wanted support for 64 bit file sizes under Windows as well as files > 8gb in t
 ## Supported Environments & Build Systems
 ### Prerequisites 
 We use the excellent fmtlib: https://github.com/fmtlib/fmt.
-- Windows: vcpkg install fmt:x64-windows
-- Linux: clone from github, build and install
+- Windows: automatic dependency in vcpkg
+- Linux: clone from github, checkout 5.1.0, build and install with cmake
 
 ### Windows 10 x64
 - vcpkg install pax_tar:x64-windows
-- Visual Studio 2017 Project Included
+- Visual Studio 2017 Solution included for self building
 
 ### Linux (Tested Under CentOS)
-cmake build file included
+meson build file included
+
+```sh
+git clone https://github.com/researcher2/pax_tar.git
+cd pax_tar
+mkdir build
+cd build
+meson ..
+ninja
+ninja install
+```
 
 ## Basic Usage
 The below code is also available in "pax_tar_examples.cpp".
@@ -97,3 +107,4 @@ void paxReading(string &testFileName)
         cout << "Data: " << loadedData << endl;
     }
 }
+```
