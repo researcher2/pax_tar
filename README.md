@@ -22,10 +22,28 @@ cmake build file included
 The below code is also available in "pax_tar_examples.cpp".
 
 ```cpp
-#include "pax_tar.h"
+#include <pax_tar.h> // Will resolve to VCPKG or system path
 
 #include <iostream>
 using std::cout; using std::endl;
+
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
+void paxWriting(string &testFileName);
+void paxReading(string &testFileName);
+
+int main()
+{
+    string testFileName = "test.tar";
+    if (fs::exists(testFileName))
+        fs::remove(testFileName);
+    
+    paxWriting(testFileName);
+    paxReading(testFileName);
+
+    getchar();
+}
 
 void paxWriting(string &testFileName)
 {
