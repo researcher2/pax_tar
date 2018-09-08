@@ -1,4 +1,0 @@
-Source: pax-tar
-Version: 1.0
-Description: Simple C++ Tar API using PAX Extended Header. Create & Read Tars supporting large file sizes and path names.
-Build-Depends: fmt
