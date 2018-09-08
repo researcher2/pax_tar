@@ -14,14 +14,13 @@
 
 include(vcpkg_common_functions)
 
-vcpkg_download_distfile(ARCHIVE
-    URLS "http://pax-tar-test/pax_tar.zip"
-    FILENAME "pax_tar.zip"
-    SKIP_SHA512
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO researcher2/pax_tar
+    REF 1.0
+    SHA512 ad29726e9b48b19294d6ed627b13ab216ad886aa6df33ca94ac96c47d471f362239a855ab0ed90cd2e7807a58136272368e95c03a62fb21674c2d735703790b0
+    HEAD_REF master
 )
-vcpkg_extract_source_archive(${ARCHIVE} ${CURRENT_BUILDTREES_DIR}/src)
-
-set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/pax_tar)
 
 # Copy Includes
 FILE(COPY            ${SOURCE_PATH}/src/pax_tar.h
