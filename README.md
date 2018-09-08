@@ -28,7 +28,7 @@ Visual Studio 2017 Solution included for self building:
 - Testing vcpkg static crt linkage project
 
 ### Linux (Tested Under CentOS)
-meson build file included
+meson build file included. Note that the final install step assumes you want to install into the system directories and you have meson installed by sudo user already.
 
 ```sh
 git clone https://github.com/researcher2/pax_tar.git
@@ -37,7 +37,7 @@ mkdir build
 cd build
 meson ..
 ninja
-ninja install
+sudo ninja install
 ```
 
 ## Basic Usage
