@@ -9,7 +9,7 @@
 #include <iostream>
 using std::cout; using std::endl;
 
-#include <filesystem>
+#include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 
 using std::stoll;
@@ -71,7 +71,7 @@ TarFile::TarFile(string &fileName)
     
     fileStream.open(fileName, std::fstream::in | std::fstream::out | std::fstream::binary);   
     if (!fileStream)
-        throw std::exception("Failed to open tar file");
+        throw std::runtime_error("Failed to open tar file");
 
     TarV7Header header;
 
@@ -79,14 +79,14 @@ TarFile::TarFile(string &fileName)
     {
         fileStream.read((char*)&header, rawHeaderSize);
         if (!fileStream)
-            throw std::exception("Invalid End Of Tar File");        
+            throw std::runtime_error("Invalid End Of Tar File");        
 
         // End Of File? check for 2 x 512 null filled
         if (memcmp(&header, nullBlock.data(), nullBlock.size()) == 0)
         {
             fileStream.read((char*)&header, rawHeaderSize);
             if (!fileStream)
-                throw std::exception("Invalid End Of Tar File");
+                throw std::runtime_error("Invalid End Of Tar File");
 
             if (memcmp(&header, nullBlock.data(), nullBlock.size()) == 0)
             {
@@ -95,7 +95,7 @@ TarFile::TarFile(string &fileName)
                 break;
             }
             else
-                throw std::exception("Invalid End Of Tar File");
+                throw std::runtime_error("Invalid End Of Tar File");
         }
 
         TarFileEntry fileEntry;
@@ -114,10 +114,10 @@ TarFile::TarFile(string &fileName)
             TarV7Header actualFileHeader;            
             fileStream.read((char*)&actualFileHeader, rawHeaderSize);
             if (!fileStream)
-                throw std::exception("Invalid End Of Tar File");
+                throw std::runtime_error("Invalid End Of Tar File");
 
             if (actualFileHeader.type != MTAR_TREG)
-                throw std::exception("Proceeding v7 Header is not for standard file.");
+                throw std::runtime_error("Proceeding v7 Header is not for standard file.");
 
             TarFileEntry actualFileEntry;
             parseRawHeader(&actualFileHeader, actualFileEntry);
@@ -300,13 +300,13 @@ void parseRawHeader(TarV7Header *rh, TarFileEntry &file)
 
     /* If the checksum starts with a null byte we assume the record is NULL */
     if (*rh->checksum == '\0')
-        throw std::exception("Null Checksum");
+        throw std::runtime_error("Null Checksum");
 
     /* Build and compare checksum */
     chksum1 = checksum(rh);
     sscanf(rh->checksum, "%o", &chksum2);
     if (chksum1 != chksum2)
-        throw std::exception("Bad Checksum");
+        throw std::runtime_error("Bad Checksum");
 
     /* Load raw header into header */
     unsigned int size;
