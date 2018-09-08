@@ -14,8 +14,7 @@ We use the excellent fmtlib: https://github.com/fmtlib/fmt.
 ### Windows 10 x64 VCPKG
 As this is not a fully complete TAR library I have not submitted it to the VCPKG curated list. However, I have written the port file so you can still easily install with VCPKG.
 
-- Clone https://github.com/researcher2/pax_tar_vcpkg_port.git.
-- Copy the "pax-tar" directory into your "vcpkg/ports" directory.
+- Clone https://github.com/researcher2/pax_tar_vcpkg_port.git into "vcpkg/ports/pax-tar"
 ```
 vcpkg install pax_tar:x64-windows
 ```
