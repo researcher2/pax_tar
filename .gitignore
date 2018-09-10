@@ -19,3 +19,6 @@ vs2017/pax_tar_vcpkg_static_test/x64/Debug/vcpkg.applocal.log
 vs2017/x64/Debug/pax_tar_vcpkg_static_test.exe
 vs2017/x64/Debug/pax_tar_vcpkg_static_test.ilk
 vs2017/x64/Debug/pax_tar_vcpkg_static_test.pdb
+vs2017/.vs/pax_tar/v15/Browse.VC.opendb
+vs2017/.vs/pax_tar/v15/Solution.VC.db-shm
+vs2017/.vs/pax_tar/v15/Solution.VC.db-wal
