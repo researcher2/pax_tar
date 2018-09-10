@@ -16,7 +16,7 @@ int main()
         fs::remove(testFileName);
     
     paxWriting(testFileName);
-    //paxReading(testFileName);
+    paxReading(testFileName);
 
     getchar();
 }
