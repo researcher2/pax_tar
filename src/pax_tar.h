@@ -44,5 +44,6 @@ private:
     size_t endOfFile1024Offset;
 
 private:
+    void finaliseInternal();
     void finaliseArchive();
 };

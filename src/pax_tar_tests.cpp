@@ -21,6 +21,10 @@ int main()
         fs::remove(testFileName);
 
     basicTest();
+
+    //if (fs::exists(testFileName))
+    //    fs::remove(testFileName);
+
     //largeFileSizeTest();
 
     getchar();

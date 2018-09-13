@@ -14,13 +14,13 @@ namespace fs = std::experimental::filesystem;
 
 using std::stoll;
 
-// Tar V7 Header
+// Tar Ustar Header
 // Size field is stored in 11 bytes of octal with a null byte.
 // 8gb Max File Size, 99 Character Max File Name
 // See: https://www.gnu.org/software/tar/manual/html_chapter/tar_8.html
 //      http://www.gnu.org/software/tar/manual/html_node/Standard.html
 
-struct TarV7Header
+struct TarUSTARHeader
 {
     char name[100];
     char mode[8];
@@ -31,13 +31,14 @@ struct TarV7Header
     char checksum[8];
     char type;
     char linkname[100];
-    char _padding[255];
+    char ustar[6];
+    char ustarVersion[2];
+    char _padding[247];
 };
 
 static const string nullBlock(512, '\0');
 
-constexpr int rawHeaderSize = sizeof(TarV7Header);
-constexpr int expectedRawHeaderSize = 100 + 8 + 8 + 8 + 12 + 12 + 8 + 1 + 100 + 255;
+constexpr int rawHeaderSize = sizeof(TarUSTARHeader);
 
 enum
 {
@@ -51,13 +52,13 @@ enum
     MTAR_PAX = 'x'
 };
 
-uint32_t checksum(TarV7Header *rh);
-void parseRawHeader(TarV7Header *rh, TarFileEntry &file);
+uint32_t checksum(TarUSTARHeader *rh);
+void parseRawHeader(TarUSTARHeader *rh, TarFileEntry &file);
 void paxOverride(string &paxHeaderData, TarFileEntry &file);
 size_t roundUp(size_t n, size_t incr);
 void seekToNearest512(fstream &stream);
 string buildPaxHeaderRecord(const char *keyword, const char *value);
-void setupHeader(TarV7Header &header, char type, int mode, unsigned int size);
+void setupHeader(TarUSTARHeader &header, string &name, char type, int mode, unsigned int size);
 
 TarFile::TarFile(string &fileName)
 {
@@ -73,7 +74,7 @@ TarFile::TarFile(string &fileName)
     if (!fileStream)
         throw std::runtime_error("Failed to open tar file");
 
-    TarV7Header header;
+    TarUSTARHeader header;
 
     while (true)
     {
@@ -110,20 +111,22 @@ TarFile::TarFile(string &fileName)
             if (!fileStream)
                 break;
 
-            // Read The Proceeding v7 Header
-            TarV7Header actualFileHeader;            
+            seekToNearest512(fileStream);
+
+            // Read The Proceeding USTAR Header
+            TarUSTARHeader actualFileHeader;            
             fileStream.read((char*)&actualFileHeader, rawHeaderSize);
             if (!fileStream)
                 throw std::runtime_error("Invalid End Of Tar File");
 
             if (actualFileHeader.type != MTAR_TREG)
-                throw std::runtime_error("Proceeding v7 Header is not for standard file.");
+                throw std::runtime_error("Proceeding USTAR Header is not for standard file.");
 
             TarFileEntry actualFileEntry;
             parseRawHeader(&actualFileHeader, actualFileEntry);
             actualFileEntry.fileOffset = fileStream.tellg();
 
-            // Pax header entries override corresponding v7 attributes
+            // Pax header entries override corresponding USTAR attributes
             paxOverride(paxHeaderData, actualFileEntry);
 
             files.push_back(actualFileEntry);
@@ -158,9 +161,13 @@ void TarFile::getFileData(TarFileEntry &entry, string &data)
     fileStream.read((char*)data.data(), entry.size);
 }
 
-void setupHeader(TarV7Header &header, char type, int mode, unsigned int size)
+void setupHeader(TarUSTARHeader &header, string &name, char type, int mode, unsigned int size)
 {
-    memset(&header, 0, sizeof(TarV7Header));
+    memset(&header, 0, sizeof(TarUSTARHeader));
+    memcpy(header.ustar, "ustar", 6);
+    memcpy(header.ustarVersion, "00", 2);
+
+    strcpy(header.name, name.c_str());
 
     header.type = type;
     sscanf(header.mode, "%o", &mode);
@@ -183,21 +190,24 @@ void TarFile::addFile(string &fileName, size_t fileSize)
     // Overwrite EOF Marker
     fileStream.seekg(endOfFile1024Offset);
 
-    // Build & Write First v7 Header (type = 'x')
+    // Build & Write First USTAR Header (type = 'x')
     {
-        TarV7Header header;
-        setupHeader(header, MTAR_PAX, 0, static_cast<unsigned int>(paxHeader.size()));
-        fileStream.write((char*)&header, sizeof(TarV7Header));
+        TarUSTARHeader header;
+        string name = "Pax Extended Header";
+        setupHeader(header, name, MTAR_PAX, 0, static_cast<unsigned int>(paxHeader.size()));
+        fileStream.write((char*)&header, sizeof(TarUSTARHeader));
     }
 
     // Write Pax Header
     fileStream.write(paxHeader.data(), paxHeader.size());
+    finaliseInternal(); // blank fill to nearest 512
 
-    // Build & Write Second v7 Header (type = '0')
+    // Build & Write Second USTAR Header (type = '0')
     {
-        TarV7Header header;
-        setupHeader(header, MTAR_TREG, 0664, 0);
-        fileStream.write((char*)&header, sizeof(TarV7Header));
+        TarUSTARHeader header;
+        string name = "To be overwritten";
+        setupHeader(header, name, MTAR_TREG, 0664, fileSize);
+        fileStream.write((char*)&header, sizeof(TarUSTARHeader));
 
         TarFileEntry fileEntry;
         parseRawHeader(&header, fileEntry);
@@ -214,7 +224,7 @@ void TarFile::writeData(char *data, size_t dataLength)
     fileStream.write(data, dataLength);
 }
 
-void TarFile::finaliseFile()
+void TarFile::finaliseInternal()
 {
     size_t filePosition = fileStream.tellg();
     seekToNearest512(fileStream);
@@ -226,6 +236,11 @@ void TarFile::finaliseFile()
         fileStream << '\0';
 
     endOfFile1024Offset = fileStream.tellg();
+}
+
+void TarFile::finaliseFile()
+{
+    finaliseInternal();
     finaliseArchive();
 }
 
@@ -247,14 +262,14 @@ size_t roundUp(size_t n, size_t incr)
     return n + (incr - n % incr) % incr;
 }
 
-uint32_t checksum(TarV7Header *rh)
+uint32_t checksum(TarUSTARHeader *rh)
 {
     unsigned char *p = (unsigned char*)rh;
     uint32_t res = 256;
-    for (uint32_t i = 0; i < offsetof(TarV7Header, checksum); ++i)
+    for (uint32_t i = 0; i < offsetof(TarUSTARHeader, checksum); ++i)
         res += p[i];
 
-    for (uint32_t i = offsetof(TarV7Header, type); i < sizeof(*rh); ++i)
+    for (uint32_t i = offsetof(TarUSTARHeader, type); i < sizeof(*rh); ++i)
         res += p[i];
 
     return res;
@@ -294,7 +309,7 @@ string buildPaxHeaderRecord(const char *keyword, const char *value)
     return record;
 }
 
-void parseRawHeader(TarV7Header *rh, TarFileEntry &file)
+void parseRawHeader(TarUSTARHeader *rh, TarFileEntry &file)
 {
     unsigned chksum1, chksum2;
 
@@ -319,6 +334,7 @@ void parseRawHeader(TarV7Header *rh, TarFileEntry &file)
     file.type = rh->type;
     file.path.append(rh->name);
     strcpy(file.linkname, rh->linkname);
+
 }
 
 void paxOverride(string &paxHeaderData, TarFileEntry &file)
