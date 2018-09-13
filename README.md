@@ -16,7 +16,7 @@ As this is not a fully complete TAR library I have not submitted it to the VCPKG
 
 - Clone https://github.com/researcher2/pax_tar_vcpkg_port.git into "vcpkg/ports/pax-tar"
 ```
-vcpkg install pax_tar:x64-windows
+vcpkg install pax-tar:x64-windows
 ```
 
 ### Windows 10 x64 Visual Studio
